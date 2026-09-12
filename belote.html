@@ -1253,4 +1253,39 @@ function addChat(d){
   }
 })();
 </script>
+  <style>
+  /* Cartes du tapis plus grandes */
+  .slot{ --cw:clamp(68px,12.5vh,108px); width:var(--cw); height:calc(var(--cw)*1.4); }
+  .pos-n{ transform:translate(-50%,-110%); }
+  #deck, #turned{ --cw:clamp(60px,10.5vh,84px); width:var(--cw); height:calc(var(--cw)*1.4); }
+</style>
+<script>
+/* Voix qui annonce Belote / Rebelote */
+(function(){
+  if(!('speechSynthesis' in window)) return;
+  const FEM=['hortense','julie','amelie','amélie','audrey','marie','céline','celine',
+             'denise','virginie','caroline','charlotte','aurélie','aurelie','léa','lea','google français'];
+  let voix=null;
+  function choisir(){
+    const fr=speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang));
+    if(fr.length) voix=fr.find(v=>FEM.some(n=>v.name.toLowerCase().includes(n)))||fr[0];
+  }
+  choisir();
+  speechSynthesis.onvoiceschanged=choisir;
+  function dire(txt){
+    if(typeof Snd!=='undefined' && !Snd.on) return; /* respecte le bouton Son */
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(txt);
+      u.lang='fr-FR';
+      if(voix) u.voice=voix;
+      u.rate=.92; u.pitch=1.15; u.volume=1;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  if(typeof socket!=='undefined'){
+    socket.on('belote', d=> dire(d.kind==='belote' ? 'Belote !' : 'Rebelote !'));
+  }
+})();
+</script>
 </html>
