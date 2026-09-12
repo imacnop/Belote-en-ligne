@@ -391,6 +391,15 @@
     #chat{ width:240px; height:280px; right:10px; bottom:60px; }
     .seat-3{ left:10px; } .seat-1{ right:10px; }
   }
+  /* ===== Correctif : noms des joueurs toujours visibles ===== */
+.plate{ z-index:3; }                                    /* les plaques passent au-dessus des cartes */
+.seat-2{ top:64px; }                                    /* le joueur d'en face descend sous le bandeau d'état */
+.seat-1 .plate, .seat-3 .plate{ margin-bottom:46px; }   /* espace pour les cartes verticales des côtés */
+@media (max-width:900px){
+  .seat-2{ top:56px; }
+  .seat-1 .plate, .seat-3 .plate{ margin-bottom:38px; }
+  #pile-0{ right:64px; }                                /* la pile de plis ne cache plus le bouton tchat */
+}
 </style>
 </head>
 <body>
