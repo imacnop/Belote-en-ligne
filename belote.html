@@ -123,14 +123,14 @@
   /* ===== Centre : talon, carte retournée, pli ===== */
   #center{ position:absolute; left:50%; top:46%; z-index:2; }
   #center > *{ position:absolute; }
-  #deck, #turned{ --cw:clamp(46px,8vh,64px); width:var(--cw); height:calc(var(--cw)*1.4); }
-  #deck{ transform:translate(calc(-50% - 92px),-50%); transition:opacity .4s; }
+  #deck, #turned{ --cw:clamp(54px,9vh,76px); width:var(--cw); height:calc(var(--cw)*1.4); }
+  #deck{ transform:translate(calc(-50% - 106px),-50%); transition:opacity .4s; }
   #deck.hidden{ opacity:0; pointer-events:none; }
   #deck .card{ position:absolute; left:0; top:0; }
   #deck .card:nth-child(2){ transform:translate(2px,-2px) rotate(1.4deg); }
   #deck .card:nth-child(3){ transform:translate(4px,-4px) rotate(-1.6deg); }
   #turned{ transform:translate(-50%,-50%); }
-  .slot{ --cw:clamp(48px,8.4vh,70px); width:var(--cw); height:calc(var(--cw)*1.4); }
+  .slot{ --cw:clamp(58px,10vh,84px); width:var(--cw); height:calc(var(--cw)*1.4); }
   .slot .card{ width:100%; height:100%; transform:rotate(var(--rot,0deg)); }
   .pos-s{ transform:translate(-50%,64%); }
   .pos-n{ transform:translate(-50%,-164%); }
@@ -139,16 +139,18 @@
 
   /* ===== Joueurs : avatars + plaques ===== */
   .seat{ position:absolute; z-index:4; display:flex; flex-direction:column; align-items:center; gap:7px; }
-  .seat-2{ top:10px; left:50%; transform:translateX(-50%); }
+  .seat-2{ top:66px; left:50%; transform:translateX(-50%); }
   .seat-3{ left:16px; top:50%; transform:translateY(-50%); }
   .seat-1{ right:16px; top:50%; transform:translateY(-50%); }
-  #plate-0{ position:absolute; left:16px; bottom:16px; z-index:4; }
+  #plate-0{ position:absolute; left:16px; bottom:16px; z-index:6; }
 
-  .plate{ position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .plate{ position:relative; z-index:6; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .seat-1 .plate, .seat-3 .plate{ margin-bottom:62px; }
   .avwrap{
     width:56px; height:56px; border-radius:50%; overflow:hidden; background:#0B1F13;
     border:3px solid rgba(235,217,172,.85);
     box-shadow:0 3px 9px rgba(0,0,0,.55); transition:border-color .2s, box-shadow .2s;
+    display:block;
   }
   .avwrap svg{ display:block; }
   .plate.active .avwrap{
@@ -193,14 +195,14 @@
   .seat-2 .bubble::after{ top:auto; bottom:100%; border-top-color:transparent; border-bottom-color:var(--cream); }
 
   /* ===== Mains ===== */
-  .mini-hand{ --cw:26px; position:relative; width:140px; height:48px;
+  .mini-hand{ --cw:30px; position:relative; width:168px; height:56px;
     display:flex; align-items:center; justify-content:center; }
   .mini-hand .card{ margin-left:calc(var(--cw)*-.52); transform:rotate(var(--rot,0deg)); }
   .mini-hand .card:first-child{ margin-left:0; }
-  .seat-1 .mini-hand{ transform:rotate(-90deg); }
-  .seat-3 .mini-hand{ transform:rotate(90deg); }
+  .seat-1 .mini-hand{ transform:rotate(-90deg); width:150px; }
+  .seat-3 .mini-hand{ transform:rotate(90deg); width:150px; }
 
-  #hand-0{ --cwm:clamp(58px,9.5vh,84px);
+  #hand-0{ --cwm:clamp(66px,11.5vh,98px);
     position:absolute; bottom:4px; left:50%; transform:translateX(-50%); z-index:5;
     width:max-content; height:calc(var(--cwm)*1.4 + 26px);
     display:flex; align-items:flex-start; justify-content:center; padding-top:26px; }
@@ -221,18 +223,17 @@
   /* ===== Piles de plis ===== */
   .pile{ position:absolute; z-index:3; display:flex; align-items:center; gap:10px; opacity:.4; transition:opacity .3s; }
   .pile.live{ opacity:1; }
-  #pile-0{ right:74px; bottom:16px; }
+  #pile-0{ right:66px; bottom:16px; }
   #pile-1{ left:16px; top:96px; flex-direction:row-reverse; }
-  .pile .stack{ position:relative; width:32px; height:45px; }
-  .pile .stack .card{ --cw:32px; position:absolute; left:0; top:0; }
+  .pile .stack{ position:relative; width:36px; height:50px; }
+  .pile .stack .card{ --cw:36px; position:absolute; left:0; top:0; }
   .pile .plabel{ font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream-dim);
     background:rgba(0,0,0,.3); border:1px solid rgba(201,164,100,.25); border-radius:8px; padding:3px 9px; }
-  #pile-1 .plabel{ text-align:left; }
   .pile .plabel b{ display:block; font-family:'Fraunces',serif; font-size:13.5px; letter-spacing:.02em;
     text-transform:none; color:var(--cream); font-weight:700; }
 
   /* ===== Enchères ===== */
-  #bid-panel{ position:fixed; left:50%; bottom:calc(clamp(58px,9.5vh,84px)*1.4 + 48px);
+  #bid-panel{ position:fixed; left:50%; bottom:calc(clamp(66px,11.5vh,98px)*1.4 + 48px);
     transform:translateX(-50%) translateY(10px); opacity:0; pointer-events:none; transition:.22s;
     background:var(--cream); color:var(--ink); border-radius:15px; padding:14px 18px 15px;
     box-shadow:0 14px 34px rgba(0,0,0,.55); z-index:30; text-align:center; }
@@ -383,23 +384,18 @@
     #frame{ inset:6px; padding:8px; border-radius:20px; }
     #board{ border-radius:14px; }
     #chip{ display:none; }
-    #hand-0{ --cwm:clamp(44px,8.4vh,66px); }
-    .mini-hand{ --cw:21px; width:110px; height:40px; }
+    #hand-0{ --cwm:clamp(52px,9.6vh,76px); }
+    .mini-hand{ --cw:24px; width:132px; height:46px; }
+    .seat-1 .mini-hand, .seat-3 .mini-hand{ width:124px; }
     .avwrap{ width:44px; height:44px; }
-    #pile-0{ right:16px; bottom:14px; } #pile-1{ left:14px; top:84px; }
+    .seat-2{ top:54px; }
+    .seat-1 .plate, .seat-3 .plate{ margin-bottom:48px; }
+    #pile-0{ right:60px; bottom:14px; } #pile-1{ left:14px; top:84px; }
     #scorebox{ padding:6px 12px; gap:10px; }
     #chat{ width:240px; height:280px; right:10px; bottom:60px; }
     .seat-3{ left:10px; } .seat-1{ right:10px; }
+    #deck{ transform:translate(calc(-50% - 88px),-50%); }
   }
-  /* ===== Correctif : noms des joueurs toujours visibles ===== */
-.plate{ z-index:3; }                                    /* les plaques passent au-dessus des cartes */
-.seat-2{ top:64px; }                                    /* le joueur d'en face descend sous le bandeau d'état */
-.seat-1 .plate, .seat-3 .plate{ margin-bottom:46px; }   /* espace pour les cartes verticales des côtés */
-@media (max-width:900px){
-  .seat-2{ top:56px; }
-  .seat-1 .plate, .seat-3 .plate{ margin-bottom:38px; }
-  #pile-0{ right:64px; }                                /* la pile de plis ne cache plus le bouton tchat */
-}
 </style>
 </head>
 <body>
@@ -963,7 +959,7 @@ socket.on('trickWon', async d=>{
     const r=c.getBoundingClientRect();
     c.style.transition='transform .5s cubic-bezier(.5,0,.8,.4), opacity .42s ease-in';
     c.style.opacity='0';
-    c.style.transform=`rotate(${c.dataset.rot||0}deg) translate(${pileR.left+16-(r.left+r.width/2)}px,${pileR.top+22-(r.top+r.height/2)}px) scale(.2)`;
+    c.style.transform=`rotate(${c.dataset.rot||0}deg) translate(${pileR.left+18-(r.left+r.width/2)}px,${pileR.top+25-(r.top+r.height/2)}px) scale(.2)`;
   }
   Snd.play('trick');
   await sleep(470);
@@ -1189,7 +1185,7 @@ function addChat(d){
   if(!C.lastTrick) return;
   const b=$('#lt-board'); b.innerHTML='';
   const posCls=['pos-s','pos-e','pos-n','pos-w'];
-  const off=[[0,90],[95,0],[0,-90],[-95,0]];
+  const off=[[0,100],[108,0],[0,-100],[-108,0]];
   C.lastTrick.forEach(x=>{
     const slot=document.createElement('div');
     slot.className='slot '+posCls[x.p];
@@ -1198,7 +1194,7 @@ function addChat(d){
     const n=document.createElement('div');
     n.className='lt-name';
     n.style.left=`calc(50% + ${off[x.p][0]}px)`;
-    n.style.top=`calc(50% + ${off[x.p][1]+40}px)`;
+    n.style.top=`calc(50% + ${off[x.p][1]+46}px)`;
     n.textContent=nameOfDisp(x.p);
     b.appendChild(n);
   });
@@ -1222,16 +1218,4 @@ function addChat(d){
 };
 </script>
 </body>
-<style>
-  .plate{ z-index:6; }
-  .plate .avwrap, .plate .plaque-name, .plate .ptag{ position:relative; z-index:6; }
-  .seat-2{ top:66px; }
-  .seat-1 .plate, .seat-3 .plate{ margin-bottom:58px; }
-  .seat-1 .mini-hand, .seat-3 .mini-hand{ width:120px; }
-  #pile-0{ right:64px; }
-  @media (max-width:900px){
-    .seat-2{ top:54px; }
-    .seat-1 .plate, .seat-3 .plate{ margin-bottom:46px; }
-  }
-</style>
 </html>
