@@ -992,7 +992,6 @@ socket.on('yourHand', d=>{ C.hand=d.cards; renderHand(); });
 socket.on('bidTurn', d=>{
   clearTimeout(autoPassTm);
   setActive(disp(d.seat));
-  if(d.seat===C.seat){ showBidPanel(d.round); scheduleAutoPass(d.round); }
 });
 socket.on('bidAction', d=>{
   clearTimeout(autoPassTm);
