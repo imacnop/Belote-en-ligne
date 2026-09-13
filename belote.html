@@ -1004,7 +1004,7 @@ socket.on('bidAction', d=>{
     Voice.parler(d.seat, nameOf(d.seat)+' prend à '+(SUIT_NAME[d.suit]||'atout'));
   }else{
     speech(dpos,pick(['Je passe.','Passe.','Je passe…']));
-    Voice.parler(d.seat, nameOf(d.seat)+' passe');
+    Voice.parler(d.seat, 'Je passe');
   }
   if(d.seat===C.seat) $('#bid-panel').classList.remove('show');
 });
