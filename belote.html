@@ -119,13 +119,14 @@
   #tools button:hover{ color:#fff; border-color:var(--brass); }
   #tools button:disabled{ opacity:.35; cursor:default; }
   #tools svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  #btn-fast{ opacity:.55; }
 
   /* ===== Centre : talon, carte retournée, pli ===== */
   #center{ position:absolute; left:50%; top:46%; z-index:4; }
   #center > *{ position:absolute; }
-  /* Cartes du tapis : jusqu'à 108 px */
-  #deck, #turned{ --cw:clamp(60px,10.5vh,84px); width:var(--cw); height:calc(var(--cw)*1.4); }
-  #deck{ transform:translate(calc(-50% - 118px),-50%); transition:opacity .4s; }
+  /* Cartes du tapis : grandes (jusqu'à 126 px) */
+  #deck, #turned{ --cw:clamp(66px,11.5vh,92px); width:var(--cw); height:calc(var(--cw)*1.4); }
+  #deck{ transform:translate(calc(-50% - 128px),-50%); transition:opacity .4s; }
   #deck.hidden{ opacity:0; pointer-events:none; }
   #deck .card{ position:absolute; left:0; top:0; }
   #deck .card:nth-child(2){ transform:translate(2px,-2px) rotate(1.4deg); }
@@ -133,7 +134,7 @@
   #turned{ transform:translate(-50%,-50%); }
   .slot{ --cw:clamp(78px,14vh,126px); width:var(--cw); height:calc(var(--cw)*1.4); }
   .slot .card{ width:100%; height:100%; transform:rotate(var(--rot,0deg)); }
-  /* Croix serrée autour du centre : ne monte plus jusqu'aux noms */
+  /* Croix serrée autour du centre */
   .pos-s{ transform:translate(-50%,64%); }
   .pos-n{ transform:translate(-50%,-68%); }
   .pos-w{ transform:translate(-136%,-50%); }
@@ -280,6 +281,8 @@
   /* ===== Animations / messages ===== */
   #anim{ position:fixed; inset:0; pointer-events:none; z-index:60; }
   .flying{ position:fixed; margin:0; z-index:61; transition:transform .34s cubic-bezier(.25,.8,.3,1); }
+  body.fast .flying{ transition-duration:.16s !important; }
+  body.fast .flip-in{ animation-duration:.14s; }
   #toast{ position:fixed; top:64px; left:50%; transform:translateX(-50%) translateY(-8px);
     background:rgba(14,30,20,.94); border:1px solid rgba(201,164,100,.4); color:var(--cream);
     font-size:13.5px; padding:9px 20px; border-radius:999px; z-index:65; opacity:0;
@@ -396,7 +399,7 @@
     #scorebox{ padding:6px 12px; gap:10px; }
     #chat{ width:240px; height:280px; right:10px; bottom:60px; }
     .seat-3{ left:10px; } .seat-1{ right:10px; }
-    #deck{ transform:translate(calc(-50% - 100px),-50%); }
+    #deck{ transform:translate(calc(-50% - 108px),-50%); }
   }
 </style>
 </head>
@@ -420,6 +423,7 @@
         <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
       </button>
       <button id="btn-rules" title="Règles du jeu">?</button>
+      <button id="btn-fast" title="Mode rapide (animations accélérées)">&#9889;&#xFE0E;</button>
       <button id="btn-sound" title="Son">
         <svg viewBox="0 0 24 24" id="snd-icon"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path class="wave" d="M15.5 9.5a3.6 3.6 0 0 1 0 5M18 7.5a6.8 6.8 0 0 1 0 9"/></svg>
       </button>
@@ -694,27 +698,38 @@ const Snd={ ctx:null, on:true,
       else if(type==='belote'){ this.tone(392,.16,.06); this.tone(523,.22,.06,.13); } }catch(e){} } };
 document.addEventListener('pointerdown',()=>Snd.ensure(),{once:true});
 
-/* ---------- Voix féminine (Belote / Rebelote) ---------- */
-const Voice={ ok:('speechSynthesis' in window), voix:null,
+/* ---------- Voix française : Belote / Rebelote + annonces des enchères ---------- */
+const Voice={ ok:('speechSynthesis' in window), voix:null, siegeVoix:[null,null,null,null],
+  FEM:['hortense','julie','amelie','amélie','audrey','denise','virginie',
+       'charlotte','léa','lea','celine','céline','marie','google français'],
   init(){ if(!this.ok) return;
-    const FEM=['hortense','julie','amelie','amélie','audrey','marie','céline','celine',
-               'denise','virginie','caroline','charlotte','aurélie','aurelie','léa','lea','google français'];
     const choisir=()=>{
       const fr=speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang));
-      if(fr.length) this.voix=fr.find(v=>FEM.some(n=>v.name.toLowerCase().includes(n)))||fr[0];
+      if(!fr.length) return;
+      this.voix=fr.find(v=>this.FEM.some(n=>v.name.toLowerCase().includes(n)))||fr[0];
+      const fems=fr.filter(v=>this.FEM.some(n=>v.name.toLowerCase().includes(n)));
+      const pool=(fems.length>=2?fems:fr);
+      for(let i=0;i<4;i++) this.siegeVoix[i]=pool[i%pool.length];
     };
     choisir();
     speechSynthesis.onvoiceschanged=choisir;
   },
-  dire(txt){ if(!this.ok||!Snd.on) return;
+  base(txt, voice, pitch){
+    if(!this.ok||!Snd.on) return;
     try{
       speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(txt);
       u.lang='fr-FR';
-      if(this.voix) u.voice=this.voix;
-      u.rate=.92; u.pitch=1.15; u.volume=1;
+      if(voice) u.voice=voice;
+      u.rate=.95; u.pitch=pitch||1.15; u.volume=1;
       speechSynthesis.speak(u);
-    }catch(e){} }
+    }catch(e){}
+  },
+  dire(txt){ this.base(txt, this.voix, 1.15); },                 /* Belote / Rebelote */
+  parler(seat, txt){                                             /* enchères, voix par siège */
+    const d=(C.seat>=0)?disp(seat):0;
+    this.base(txt, this.siegeVoix[d], 1+d*0.08);
+  }
 };
 Voice.init();
 
@@ -846,8 +861,10 @@ function updateScore(){
 }
 
 /* ---------- Animations ---------- */
+let FAST=false;
 function flyCard({card=null, back=false, from, to, toRot=0, fromRot=0, dur=340}){
   return new Promise(res=>{
+    const realDur = FAST ? Math.min(dur,180) : dur;
     const el=cardEl(card,!back);
     el.classList.add('flying');
     el.style.setProperty('--cw',to.width+'px');
@@ -861,7 +878,7 @@ function flyCard({card=null, back=false, from, to, toRot=0, fromRot=0, dur=340})
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       el.style.transform=`translate(-50%,-50%) rotate(${toRot}deg) scale(1)`;
     }));
-    setTimeout(()=>{ el.remove(); res(); },dur+30);
+    setTimeout(()=>{ el.remove(); res(); },realDur+30);
   });
 }
 const flyBack=(from,to)=>flyCard({back:true,from,to,dur:300});
@@ -880,6 +897,50 @@ async function playCardVisual(d,card){
   if(back) el.classList.add('flip-in');
   slot.appendChild(el);
   Snd.play('card');
+}
+
+/* ---------- Automatismes : jeu auto & passe auto ---------- */
+let autoPlayTm=null, autoPassTm=null;
+function scheduleAutoPlay(){
+  clearTimeout(autoPlayTm);
+  autoPlayTm=setTimeout(()=>{
+    if(!C.myTurn) return;
+    const legal=legalMoves(C.hand, C.trump, C.trick, 0);
+    if(legal.length===1){
+      C.myTurn=false;
+      toast('Une seule carte possible — jouée automatiquement');
+      socket.emit('play',{cardId:legal[0].id});
+    }
+  }, 700);
+}
+function evalHandFor(hand, s){
+  const tc=hand.filter(c=>c.suit===s);
+  if(!tc.length) return -1;
+  const TP={'V':20,'9':14,'A':11,'10':10,'R':4,'D':3,'8':1,'7':1};
+  let v=tc.reduce((a,c)=>a+TP[c.rank],0);
+  if(tc.some(c=>c.rank==='R')&&tc.some(c=>c.rank==='D')) v+=20;
+  v+=[0,0,4,9,14][Math.min(tc.length,4)];
+  v+=hand.filter(c=>c.suit!==s&&c.rank==='A').length*7;
+  return v;
+}
+const SEUIL_PASS=36;
+function scheduleAutoPass(round){
+  clearTimeout(autoPassTm);
+  const hand=C.hand||[];
+  if(!hand.length) return;
+  let weak=false;
+  if(round===1 && C.turnedCard){
+    weak = evalHandFor(hand.concat([C.turnedCard]), C.turnedCard.suit) < SEUIL_PASS;
+  }else{
+    weak = SUITS.every(s=>evalHandFor(hand,s) < SEUIL_PASS);
+  }
+  if(!weak) return;
+  autoPassTm=setTimeout(()=>{
+    if(!$('#bid-panel').classList.contains('show')) return;
+    $('#bid-panel').classList.remove('show');
+    toast('Main trop faible pour prendre — passe automatique');
+    socket.emit('bid',{suit:null});
+  }, 1300);
 }
 
 /* ---------- Événements serveur ---------- */
@@ -929,15 +990,22 @@ socket.on('turned', d=>{
 });
 socket.on('yourHand', d=>{ C.hand=d.cards; renderHand(); });
 socket.on('bidTurn', d=>{
+  clearTimeout(autoPassTm);
   setActive(disp(d.seat));
-  if(d.seat===C.seat) showBidPanel(d.round);
+  if(d.seat===C.seat){ showBidPanel(d.round); scheduleAutoPass(d.round); }
 });
 socket.on('bidAction', d=>{
+  clearTimeout(autoPassTm);
   const dpos=disp(d.seat);
   setActive(-1);
-  if(d.take){ speech(dpos,`Je prends <span class="gr">${GLYPH[d.suit]}</span>`);
-    toast(`${esc(nameOf(d.seat))} prend à ${GLYPH[d.suit]}`); }
-  else speech(dpos,pick(['Je passe.','Passe.','Je passe…']));
+  if(d.take){
+    speech(dpos,`Je prends <span class="gr">${GLYPH[d.suit]}</span>`);
+    toast(`${esc(nameOf(d.seat))} prend à ${GLYPH[d.suit]}`);
+    Voice.parler(d.seat, nameOf(d.seat)+' prend à '+(SUIT_NAME[d.suit]||'atout'));
+  }else{
+    speech(dpos,pick(['Je passe.','Passe.','Je passe…']));
+    Voice.parler(d.seat, nameOf(d.seat)+' passe');
+  }
   if(d.seat===C.seat) $('#bid-panel').classList.remove('show');
 });
 socket.on('allPass1', ()=>toast('Premier tour de passe — au second, chacun choisit sa couleur'));
@@ -956,13 +1024,15 @@ socket.on('turnedTaken', d=>{
 });
 socket.on('turn', d=>{
   setActive(disp(d.seat));
-  if(d.seat===C.seat){ C.myTurn=true; applyLegality(); }
+  if(d.seat===C.seat){ C.myTurn=true; applyLegality(); scheduleAutoPlay(); }
 });
 socket.on('cardPlayed', async d=>{
   const dpos=disp(d.seat);
   C.myTurn=false;
+  clearTimeout(autoPlayTm);
   $('#deck').classList.add('hidden');
   if(dpos===0){ C.hand=C.hand.filter(c=>c.id!==d.card.id); renderHand(); }
+  else if(C.counts[dpos]>0){ C.counts[dpos]--; renderMiniHand(dpos, C.counts[dpos]); }
   await playCardVisual(dpos,d.card);
   C.trick.push({p:dpos, card:d.card});
   setActive(-1);
@@ -1018,6 +1088,7 @@ function onDealStep(d){
 function resetBoard(d){
   C.trump=null; C.taker=-1; C.trick=[]; C.lastTrick=null; C.lastWinner=-1;
   C.counts=[0,0,0,0]; C.myTurn=false; C.turnedCard=null; C.hand=[];
+  clearTimeout(autoPlayTm); clearTimeout(autoPassTm);
   slotEls.forEach(s=>s.innerHTML='');
   for(let i=0;i<4;i++) $('#hand-'+i).innerHTML='';
   $('#turned').innerHTML='';
@@ -1037,7 +1108,7 @@ function showBidPanel(round){
   const mk=(label,cls,val)=>{
     const b=document.createElement('button');
     b.className='btn '+cls; b.innerHTML=label;
-    b.onclick=()=>{ $('#bid-panel').classList.remove('show'); socket.emit('bid',{suit:val}); };
+    b.onclick=()=>{ clearTimeout(autoPassTm); $('#bid-panel').classList.remove('show'); socket.emit('bid',{suit:val}); };
     row.appendChild(b);
   };
   if(round===1&&gs) mk(`Prendre ${GLYPH[gs]}`,'primary',gs);
@@ -1056,6 +1127,8 @@ function showBidPanel(round){
     toast(illegalReason(card));
     return;
   }
+  clearTimeout(autoPlayTm);
+  C.myTurn=false;
   socket.emit('play',{cardId:card.id});
 });
 function showTicket(r,m){
@@ -1207,7 +1280,7 @@ function addChat(d){
   socket.emit('chat',{text:t.slice(0,200)});
 });
 
-/* ---------- Dernier pli, règles, son, sortie ---------- */
+/* ---------- Dernier pli, règles, son, mode rapide, sortie ---------- */
  $('#btn-last').onclick=()=>{
   if(!C.lastTrick) return;
   const b=$('#lt-board'); b.innerHTML='';
@@ -1232,6 +1305,12 @@ function addChat(d){
  $('#btn-rules').onclick=()=>$('#rules-ov').classList.add('show');
  $('#btn-close-rules').onclick=()=>$('#rules-ov').classList.remove('show');
  $('#rules-ov').addEventListener('click',e=>{ if(e.target.id==='rules-ov') $('#rules-ov').classList.remove('show'); });
+ $('#btn-fast').onclick=()=>{
+  FAST=!FAST;
+  document.body.classList.toggle('fast',FAST);
+  $('#btn-fast').style.opacity=FAST?1:.55;
+  toast(FAST?'Mode rapide activé':'Mode rapide désactivé');
+};
  $('#btn-sound').onclick=()=>{
   Snd.on=!Snd.on;
   $('#snd-icon .wave').style.opacity=Snd.on?1:.15;
