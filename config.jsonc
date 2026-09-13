@@ -1,0 +1,67 @@
+// ================================================================
+//  RÉGLAGES DE LA BELOTE
+//
+//  Mode d'emploi :
+//   1. Ne modifiez que les valeurs placées après les deux-points.
+//   2. Enregistrez le fichier.
+//   3. Relancez le serveur (fermez la fenêtre noire, puis tapez « npm start »).
+//
+//  Les lignes qui commencent par // sont des commentaires : le serveur
+//  les ignore. true signifie « oui », false signifie « non ».
+//  Pour les nombres à virgule, utilisez un point : 0.5 et non 0,5.
+//  En cas de valeur mal saisie, le serveur le signale au démarrage
+//  et reprend la valeur par défaut : aucun risque de tout casser.
+// ================================================================
+{
+  "partie": {
+    // Score à atteindre, présélectionné dans la salle d'attente.
+    "pointsParDefaut": 501,
+    // Scores proposés à l'hôte de la salle (0 = partie libre, sans limite).
+    "choixPoints": [251, 501, 1001, 0]
+  },
+
+  "regles": {
+    // Valeur de la belote et rebelote (Roi et Dame d'atout).
+    "pointsBelote": 20,
+    // Bonus accordé à l'équipe qui remporte le dernier pli.
+    "dixDeDer": 10,
+    // Points marqués par l'équipe qui remporte tous les plis (capot).
+    "pointsCapot": 252,
+    // Le preneur qui chute conserve-t-il sa belote ?
+    // true = il la conserve ; false = elle revient à la défense.
+    "beloteToujoursAcquise": true,
+    // Quand un adversaire a coupé et qu'on ne peut pas surcouper :
+    // true = on doit tout de même jouer un atout plus faible (règle officielle) ;
+    // false = on peut se défausser d'une carte d'une autre couleur.
+    "obligationDeSousCouper": true
+  },
+
+  "aides": {
+    // Jouer automatiquement la carte lorsqu'elle est la seule autorisée.
+    "jeuAutoCarteUnique": true,
+    // Passer automatiquement aux enchères quand la main est vraiment trop faible.
+    "passeAutoMainFaible": false
+  },
+
+  "temps": {
+    // Délai laissé à un joueur avant que l'ordinateur ne joue à sa place.
+    "delaiTourSecondes": 45,
+    // Pause entre deux donnes, le temps de consulter le résultat.
+    "pauseEntreDonnesSecondes": 7,
+    // Temps de réflexion des bots (0 = ils jouent instantanément).
+    "reflexionBotsSecondes": 0.7
+  },
+
+  "bots": {
+    // Noms attribués aux bots (12 caractères au maximum).
+    "noms": ["Marcel", "Gérard", "Janine", "Huguette", "Firmin", "Jeanine"]
+  },
+
+  "serveur": {
+    // Port de l'adresse du jeu : http://localhost:3000.
+    // À changer uniquement si un autre programme l'utilise déjà.
+    "port": 3000,
+    // Délai au bout duquel une salle sans joueur connecté est supprimée.
+    "dureeVieSalleMinutes": 10
+  }
+}
