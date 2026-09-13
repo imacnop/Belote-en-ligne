@@ -504,12 +504,7 @@
       <button id="btn-copy" class="btn-ghost">Copier le lien d'invitation</button>
     </div>
     <div class="wr-seats" id="wr-seats"></div>
-    <div class="targets" id="wr-targets">
-      <button class="t-chip" data-t="251">251 pts</button>
-      <button class="t-chip on" data-t="501">501 pts</button>
-      <button class="t-chip" data-t="1001">1001 pts</button>
-      <button class="t-chip" data-t="inf">Libre</button>
-    </div>
+    <div class="targets" id="wr-targets"></div>
     <button id="btn-addbot" class="btn-ghost" style="margin:0 12px">+ Ajouter un bot</button>
     <button id="btn-start-match" class="btn-primary" disabled>Lancer la partie</button>
     <p class="wr-note" id="wr-note"></p>
@@ -533,21 +528,24 @@
 <!-- Règles -->
 <div id="rules-ov" class="overlay">
   <div class="rules">
-    <h3>Règles à cette table</h3>
+    <h3>Règles de la table</h3>
     <h4>La donne</h4>
-    <p>32 cartes, 3 puis 2 cartes, la suivante retournée propose l'atout. Après la prise : 2 cartes au preneur, 3 aux autres.</p>
+    <p>Jeu de 32 cartes, distribué par 3 puis par 2 ; la carte suivante est retournée et propose l'atout. Après la prise, le preneur reçoit 2 cartes et les autres 3.</p>
     <h4>Les enchères</h4>
     <ul><li>Premier tour : prendre à la couleur retournée ou passer.</li>
-    <li>Second tour : atout au choix. Quatre passes : on redistribue.</li></ul>
+    <li>Second tour : on peut choisir une autre couleur. Si personne ne prend, on redistribue.</li></ul>
     <h4>Valeurs</h4>
-    <p>À l'atout : <span class="red">V 20, 9 → 14, A 11, 10 → 10, R 4, D 3</span>. À la couleur : A 11, 10 → 10, R 4, D 3, V 2.</p>
+    <p>À l'atout : <span class="red">valet 20 · neuf 14 · as 11 · dix 10 · roi 4 · dame 3</span>. Hors atout : as 11 · dix 10 · roi 4 · dame 3 · valet 2.</p>
     <h4>Obligations</h4>
-    <ul><li>Fournir à la couleur ; sans la couleur : couper, et surcouper si un atout plus fort est au pli.</li>
-    <li>Partenaire maître du pli : on est libre. À l'atout demandé : monter si possible.</li></ul>
-    <h4>Belote &amp; rebelote</h4>
-    <p>Roi et Dame d'atout dans la même main : 20 points (annoncés automatiquement).</p>
-    <h4>Comptage</h4>
-    <p>162 points par donne (+10 du dernier pli). Le preneur doit faire <b>plus</b> que la défense, sinon elle rafla tout. Zéro pli pour le preneur : 252 pour la défense.</p>
+    <ul><li>Fournir à la couleur demandée.</li>
+    <li>À défaut, couper. Si un adversaire a déjà coupé, surcouper si possible<span id="rg-sous">, sinon jouer tout de même un atout plus faible</span>.</li>
+    <li>Si votre partenaire est maître du pli, vous êtes libre.</li>
+    <li>Quand l'atout est demandé, il faut toujours monter si on le peut.</li></ul>
+    <h4>Belote et rebelote</h4>
+    <p>Le Roi et la Dame d'atout dans la même main valent <span id="rg-bel">20</span> points ; l'annonce se fait automatiquement. <span id="rg-bel-acq"></span></p>
+    <h4>Décompte</h4>
+    <p>Chaque donne vaut <span id="rg-total">162</span> points, dont <span id="rg-der">10</span> pour le dernier pli (dix de der). Le preneur doit en marquer <b>davantage</b> que la défense, belote comprise ; sinon, il est <b>dedans</b> et la défense empoche les <span id="rg-total2">162</span> points. En cas d'égalité, le preneur est dedans.</p>
+    <p>Capot (une équipe remporte tous les plis) : <span id="rg-capot">252</span> points.</p>
     <p style="margin-top:14px"><button id="btn-close-rules" class="btn primary">Fermer</button></p>
   </div>
 </div>
@@ -564,7 +562,7 @@
 <!-- Fin de partie -->
 <div id="go-ov" class="overlay">
   <div class="go-panel">
-    <div class="go-stamp" id="go-stamp">TABLE À NOUS</div>
+    <div class="go-stamp" id="go-stamp">VICTOIRE !</div>
     <p id="go-text"></p>
     <button id="btn-again" class="btn-primary">Nouvelle partie</button>
     <p class="wr-note" id="go-wait" hidden></p>
@@ -572,56 +570,26 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/regles.js"></script>
+<script src="/config-client.js"></script>
 <script>
 'use strict';
 
-/* ---------- Utilitaires & règles (miroir du serveur, pour l'affichage) ---------- */
+/* ---------- Utilitaires & règles (partagées avec le serveur : /regles.js) ---------- */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
-const SUITS=['s','h','d','c'];
-const SUIT_NAME={s:'pique',h:'cœur',d:'carreau',c:'trèfle'};
+/* Réglages envoyés par le serveur (fichier config.jsonc) */
+const CFG = window.BELOTE_CONFIG || { choixPoints:[251,501,1001,0], pointsParDefaut:501, regles:{}, aides:{} };
+const { SUITS, SUIT_NAME } = Regles;
 const GLYPH={s:'\u2660\uFE0E',h:'\u2665\uFE0E',d:'\u2666\uFE0E',c:'\u2663\uFE0E'};
 const IS_RED={h:1,d:1};
-const ORD_T={'7':0,'8':1,'D':2,'R':3,'10':4,'A':5,'9':6,'V':7};
-const ORD_P={'7':0,'8':1,'9':2,'V':3,'D':4,'R':5,'10':6,'A':7};
-const orderOf=(c,t)=> c.suit===t?ORD_T[c.rank]:ORD_P[c.rank];
-function bestTrumpIn(trick,t){ let b=null; for(const x of trick) if(x.card.suit===t&&(!b||orderOf(x.card,t)>orderOf(b,t))) b=x.card; return b; }
-function trickWinner(trick,t){ let best=trick[0]; for(let i=1;i<trick.length;i++){ const c=trick[i].card,b=best.card;
-  if(c.suit===b.suit){ if(orderOf(c,t)>orderOf(b,t)) best=trick[i]; } else if(c.suit===t) best=trick[i]; } return best.p; }
-function legalMoves(hand,t,trick,me){
-  if(!trick.length) return hand.slice();
-  const lead=trick[0].card.suit, mine=hand.filter(c=>c.suit===lead);
-  if(lead===t){
-    if(!mine.length) return hand.slice();
-    const bt=bestTrumpIn(trick,t), hi=mine.filter(c=>orderOf(c,t)>orderOf(bt,t));
-    return hi.length?hi:mine;
-  }
-  if(mine.length) return mine;
-  const trumps=hand.filter(c=>c.suit===t);
-  if(!trumps.length) return hand.slice();
-  if(trickWinner(trick,t)===(me+2)%4) return hand.slice();
-  const bt=bestTrumpIn(trick,t);
-  if(bt){ const hi=trumps.filter(c=>orderOf(c,t)>orderOf(bt,t)); return hi.length?hi:trumps; }
-  return trumps;
-}
-function illegalReason(card){
-  const hand=C.hand, t=C.trump, trick=C.trick;
-  if(!trick.length) return 'La table est libre.';
-  const lead=trick[0].card.suit, mine=hand.filter(c=>c.suit===lead);
-  if(mine.length&&card.suit!==lead)
-    return lead===t ? "À l'atout, vous devez monter si vous le pouvez." : `Vous devez fournir du ${SUIT_NAME[lead]} ${GLYPH[lead]}.`;
-  if(!mine.length){
-    const trumps=hand.filter(c=>c.suit===t);
-    if(trumps.length&&trickWinner(trick,t)!==2){
-      const bt=bestTrumpIn(trick,t);
-      if(bt&&trumps.some(c=>orderOf(c,t)>orderOf(bt,t))) return 'Vous devez surcouper.';
-      return `Vous devez couper à l'atout ${GLYPH[t]}.`;
-    }
-  }
-  return 'Cette carte ne peut pas être jouée.';
-}
+const RULES = { sousCouper: CFG.regles.obligationDeSousCouper !== false };
+/* Positions affichées : moi = 0, partenaire = 2 */
+const legalMoves = (hand,t,trick,me) => Regles.legalMoves(hand,t,trick,me,RULES);
+const illegalReason = card => Regles.whyIllegal(C.hand, C.trump, C.trick, 0, card, RULES);
+const targetLabel = t => t>0 ? t : 'libre';
 
 /* ---------- Avatars dessinés ---------- */
 function avatarSVG(name, size=54){
@@ -670,7 +638,7 @@ function avatarSVG(name, size=54){
 /* ---------- État client ---------- */
 const C={ pid:null, code:null, seat:-1, host:-1, players:[],
   hand:[], counts:[0,0,0,0], trump:null, taker:-1, turnedCard:null,
-  trick:[], lastTrick:null, lastWinner:-1, myTurn:false, scores:[0,0], target:501 };
+  trick:[], lastTrick:null, lastWinner:-1, myTurn:false, scores:[0,0], target:CFG.pointsParDefaut };
 const disp = p => (C.seat - p + 4) % 4;
 const nameOf = p => (C.players[p]&&C.players[p].name) || '?';
 const nameOfDisp = d => nameOf((C.seat - d + 4) % 4);
@@ -882,13 +850,13 @@ function flyCard({card=null, back=false, from, to, toRot=0, fromRot=0, dur=340})
   });
 }
 const flyBack=(from,to)=>flyCard({back:true,from,to,dur:300});
-async function playCardVisual(d,card){
+/* handFrom : position de la carte dans ma main, relevée avant qu'elle n'en soit retirée */
+async function playCardVisual(d,card,handFrom){
   const slot=slotEls[d], dst=slot.getBoundingClientRect();
   const rot=+(Math.random()*10-5).toFixed(1);
   let from, back=false, fromRot=rot;
   if(d===0){
-    const el=[...$('#hand-0').children].find(e=>e.dataset.id===card.id);
-    if(el){ from=el.getBoundingClientRect(); fromRot=parseFloat(el.style.getPropertyValue('--rot'))||0; el.style.visibility='hidden'; }
+    if(handFrom){ from=handFrom.rect; fromRot=handFrom.rot; }
     else from=seatRect(0);
   }else{ from=seatRect(d); back=true; }
   await flyCard({card,back,from,to:dst,toRot:rot,fromRot});
@@ -903,49 +871,44 @@ async function playCardVisual(d,card){
 let autoPlayTm=null, autoPassTm=null;
 function scheduleAutoPlay(){
   clearTimeout(autoPlayTm);
+  if(!CFG.aides.jeuAutoCarteUnique) return;
   autoPlayTm=setTimeout(()=>{
     if(!C.myTurn) return;
     const legal=legalMoves(C.hand, C.trump, C.trick, 0);
     if(legal.length===1){
       C.myTurn=false;
-      toast('Une seule carte possible — jouée automatiquement');
+      toast('Une seule carte possible : elle est jouée automatiquement');
       socket.emit('play',{cardId:legal[0].id});
     }
   }, 700);
 }
-function evalHandFor(hand, s){
-  const tc=hand.filter(c=>c.suit===s);
-  if(!tc.length) return -1;
-  const TP={'V':20,'9':14,'A':11,'10':10,'R':4,'D':3,'8':1,'7':1};
-  let v=tc.reduce((a,c)=>a+TP[c.rank],0);
-  if(tc.some(c=>c.rank==='R')&&tc.some(c=>c.rank==='D')) v+=20;
-  v+=[0,0,4,9,14][Math.min(tc.length,4)];
-  v+=hand.filter(c=>c.suit!==s&&c.rank==='A').length*7;
-  return v;
-}
 const SEUIL_PASS=36;
 function scheduleAutoPass(round){
   clearTimeout(autoPassTm);
+  if(!CFG.aides.passeAutoMainFaible) return;
   const hand=C.hand||[];
   if(!hand.length) return;
+  const gs=C.turnedCard?C.turnedCard.suit:null;
   let weak=false;
-  if(round===1 && C.turnedCard){
-    weak = evalHandFor(hand.concat([C.turnedCard]), C.turnedCard.suit) < SEUIL_PASS;
+  if(round===1 && gs){
+    weak = Regles.evalHand(hand.concat([C.turnedCard]), gs) < SEUIL_PASS;
   }else{
-    weak = SUITS.every(s=>evalHandFor(hand,s) < SEUIL_PASS);
+    weak = SUITS.filter(s=>s!==gs).every(s=>Regles.evalHand(hand,s) < SEUIL_PASS);
   }
   if(!weak) return;
   autoPassTm=setTimeout(()=>{
     if(!$('#bid-panel').classList.contains('show')) return;
     $('#bid-panel').classList.remove('show');
-    toast('Main trop faible pour prendre — passe automatique');
+    toast('Main trop faible : vous passez automatiquement');
     socket.emit('bid',{suit:null});
   }, 1300);
 }
 
 /* ---------- Événements serveur ---------- */
 socket.on('connect', ()=>{
+  /* Reprise automatique seulement si on était déjà assis à une table */
   const pid=sessionStorage.getItem('belote.pid'), code=sessionStorage.getItem('belote.code');
+  if(!pid || !code) return;
   const name=localStorage.getItem('belote.name')||$('#name-input').value.trim()||'Joueur';
   socket.emit('hello',{name, code, pid});
 });
@@ -957,7 +920,7 @@ socket.on('joined', d=>{
   sessionStorage.setItem('belote.pid',C.pid);
   sessionStorage.setItem('belote.code',C.code);
   updateNames(); updateScore();
-  $('#target-label').textContent=isFinite(C.target)?C.target:'libre';
+  $('#target-label').textContent=targetLabel(C.target);
   if(d.phase==='lobby'){ showRoom(); }
   else{ $('#lobby').classList.remove('show'); applySync(d.sync); }
 });
@@ -972,7 +935,7 @@ socket.on('err', d=>{
 socket.on('matchStart', d=>{
   C.scores=d.scores; C.target=d.target;
   updateScore();
-  $('#target-label').textContent=isFinite(C.target)?C.target:'libre';
+  $('#target-label').textContent=targetLabel(C.target);
   $('#go-ov').classList.remove('show'); $('#lobby').classList.remove('show'); $('#ticket-ov').classList.remove('show');
 });
 socket.on('startHand', d=>{
@@ -992,6 +955,8 @@ socket.on('yourHand', d=>{ C.hand=d.cards; renderHand(); });
 socket.on('bidTurn', d=>{
   clearTimeout(autoPassTm);
   setActive(disp(d.seat));
+  if(d.seat===C.seat){ showBidPanel(d.round); scheduleAutoPass(d.round); }
+  else $('#bid-panel').classList.remove('show');
 });
 socket.on('bidAction', d=>{
   clearTimeout(autoPassTm);
@@ -1007,8 +972,8 @@ socket.on('bidAction', d=>{
   }
   if(d.seat===C.seat) $('#bid-panel').classList.remove('show');
 });
-socket.on('allPass1', ()=>toast('Premier tour de passe — au second, chacun choisit sa couleur'));
-socket.on('allPass', ()=>toast('Quatre passes — nouvelle donne'));
+socket.on('allPass1', ()=>toast('Tout le monde passe : au second tour, chacun peut choisir une autre couleur'));
+socket.on('allPass', ()=>toast('Personne ne prend : on redistribue'));
 socket.on('taken', d=>{
   C.trump=d.suit; C.taker=d.seat;
   plateEls[disp(d.seat)].classList.add('took');
@@ -1020,22 +985,30 @@ socket.on('turnedTaken', d=>{
   const tEl=$('#turned .card');
   if(tEl&&C.turnedCard) flyCard({card:C.turnedCard, from:tEl.getBoundingClientRect(), to:seatRect(dpos)});
   $('#turned').innerHTML=''; C.turnedCard=null;
+  C.counts[dpos]++;
+  if(dpos!==0) setTimeout(()=>renderMiniHand(dpos, C.counts[dpos]), 340);
 });
 socket.on('turn', d=>{
   setActive(disp(d.seat));
   if(d.seat===C.seat){ C.myTurn=true; applyLegality(); scheduleAutoPlay(); }
 });
-socket.on('cardPlayed', async d=>{
+socket.on('cardPlayed', d=>{
   const dpos=disp(d.seat);
   C.myTurn=false;
   clearTimeout(autoPlayTm);
-  $('#deck').classList.add('hidden');
-  if(dpos===0){ C.hand=C.hand.filter(c=>c.id!==d.card.id); renderHand(); }
-  else if(C.counts[dpos]>0){ C.counts[dpos]--; renderMiniHand(dpos, C.counts[dpos]); }
-  await playCardVisual(dpos,d.card);
-  C.trick.push({p:dpos, card:d.card});
   setActive(-1);
+  $('#deck').classList.add('hidden');
+  /* Pli mis à jour tout de suite : le tour suivant peut arriver pendant l'animation */
+  C.trick.push({p:dpos, card:d.card});
+  let handFrom=null;
+  if(dpos===0){
+    const el=[...$('#hand-0').children].find(e=>e.dataset.id===d.card.id);
+    if(el) handFrom={ rect:el.getBoundingClientRect(), rot:parseFloat(el.style.getPropertyValue('--rot'))||0 };
+    C.hand=C.hand.filter(c=>c.id!==d.card.id); renderHand();
+  }
+  else if(C.counts[dpos]>0){ C.counts[dpos]--; renderMiniHand(dpos, C.counts[dpos]); }
   if(d.auto) toast('Coup joué automatiquement (joueur absent)');
+  playCardVisual(dpos,d.card,handFrom);
 });
 socket.on('belote', d=>{
   const dpos=disp(d.seat);
@@ -1047,11 +1020,13 @@ socket.on('belote', d=>{
 socket.on('trickWon', async d=>{
   const dpos=disp(d.seat);
   C.lastTrick=C.trick.slice(); C.lastWinner=dpos;
+  C.trick=[];                     // vidé tout de suite : le gagnant rejoue pendant l'animation
+  if(C.myTurn) applyLegality();
   $('#btn-last').disabled=false;
   const m=C.seat%2, pileIdx=(d.team===m)?0:1;
   const pileR=pileEls[pileIdx].querySelector('.stack').getBoundingClientRect();
-  for(const slot of slotEls){
-    const c=slot.firstElementChild; if(!c) continue;
+  const gone=slotEls.flatMap(s=>[...s.children]);
+  for(const c of gone){
     const r=c.getBoundingClientRect();
     c.style.transition='transform .5s cubic-bezier(.5,0,.8,.4), opacity .42s ease-in';
     c.style.opacity='0';
@@ -1059,8 +1034,7 @@ socket.on('trickWon', async d=>{
   }
   Snd.play('trick');
   await sleep(470);
-  slotEls.forEach(s=>s.innerHTML='');
-  C.trick=[];
+  gone.forEach(c=>c.remove());
   updatePiles(d.tricks,d.pts);
 });
 socket.on('handEnd', d=>{
@@ -1080,7 +1054,7 @@ function onDealStep(d){
   Snd.play('card');
   C.counts[dpos]++;
   setTimeout(()=>{
-    if(dpos===0) renderOwnBacks(C.counts[0]);
+    if(dpos===0){ if(!C.hand.length) renderOwnBacks(C.counts[0]); }   // ne pas recouvrir une main déjà visible
     else renderMiniHand(dpos, C.counts[dpos]);
   },110);
 }
@@ -1103,7 +1077,7 @@ function showBidPanel(round){
   const gs=C.turnedCard?C.turnedCard.suit:null;
   $('#bid-title').innerHTML = (round===1&&gs)
     ? `On vous propose l'atout <span class="gr" style="font-size:20px">${GLYPH[gs]}</span>`
-    : `Second tour — choisissez votre atout`;
+    : `Second tour — choisissez une autre couleur d'atout`;
   const mk=(label,cls,val)=>{
     const b=document.createElement('button');
     b.className='btn '+cls; b.innerHTML=label;
@@ -1111,7 +1085,7 @@ function showBidPanel(round){
     row.appendChild(b);
   };
   if(round===1&&gs) mk(`Prendre ${GLYPH[gs]}`,'primary',gs);
-  else SUITS.forEach(s=>mk(GLYPH[s],'suit'+(IS_RED[s]?' red':''),s));
+  else SUITS.filter(s=>s!==gs).forEach(s=>mk(GLYPH[s],'suit'+(IS_RED[s]?' red':''),s));
   mk('Passer','',null);
   $('#bid-panel').classList.add('show');
 }
@@ -1144,10 +1118,10 @@ function showTicket(r,m){
       cont.appendChild(d);
     });
   }
-  $('#t-status').innerHTML = r.status==='ok' ? '<span class="stamp ok">CONTRAT RÉUSSI</span>'
-    : r.status==='dedans' ? '<span class="stamp dedans">DEDANS !</span>'
-    : '<span class="stamp ko">CONTRAT CHUTÉ</span>';
-  $('#t-marks').innerHTML=`Nous marquons <b>${r.add[m]}</b> &nbsp;·&nbsp; Eux marquons <b>${r.add[1-m]}</b>`;
+  $('#t-status').innerHTML = r.status==='reussi'
+    ? (r.capot>=0 ? '<span class="stamp ok">CAPOT !</span>' : '<span class="stamp ok">CONTRAT RÉUSSI</span>')
+    : (r.capot>=0 ? '<span class="stamp dedans">DEDANS ET CAPOT</span>' : '<span class="stamp dedans">DEDANS !</span>');
+  $('#t-marks').innerHTML=`Nous marquons <b>${r.add[m]}</b> &nbsp;·&nbsp; Ils marquent <b>${r.add[1-m]}</b>`;
   const btn=$('#btn-next');
   btn.textContent = r.gameOver ? 'Voir le résultat final' : 'Donne suivante';
   $('#ticket-ov').classList.add('show');
@@ -1159,7 +1133,7 @@ function showTicket(r,m){
 function showGo(r){
   const m=C.seat%2, won=r.winner===m;
   const st=$('#go-stamp');
-  st.textContent=won?'TABLE À NOUS':'TABLE À EUX';
+  st.textContent=won?'VICTOIRE !':'DÉFAITE…';
   st.className='go-stamp '+(won?'win':'lose');
   $('#go-text').innerHTML=`Score final — <b>Nous ${r.scores[m]}</b> · <b>Eux ${r.scores[1-m]}</b>`;
   const isHost=C.host===C.seat;
@@ -1218,7 +1192,7 @@ function renderRoomSeats(){
   $('#btn-start-match').disabled=!(isHost&&full);
   $('#wr-note').textContent = full
     ? (isHost?'Tout le monde est là — à vous de lancer !':`En attente du lancement par ${esc(nameOf(C.host))}…`)
-    : 'Partagez le code ou le lien pour réunir 4 joueurs (des bots peuvent compléter la table).';
+    : 'Partagez le code ou le lien pour réunir quatre joueurs ; des bots peuvent compléter la table.';
 }
 function sendHello(extra){
   const name=($('#name-input').value.trim()||'Joueur').slice(0,12);
@@ -1243,14 +1217,20 @@ function sendHello(extra){
   try{ await navigator.clipboard.writeText(url); toast('Lien d\u2019invitation copié !'); }
   catch(e){ prompt('Copiez ce lien et envoyez-le à vos amis :', url); }
 };
-let chosenTarget=501;
-document.querySelectorAll('.t-chip').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.t-chip').forEach(x=>x.classList.remove('on'));
+/* Scores proposés à l'hôte (config.jsonc → partie.choixPoints ; 0 = partie libre) */
+let chosenTarget=CFG.pointsParDefaut;
+CFG.choixPoints.forEach(t=>{
+  const b=document.createElement('button');
+  b.className='t-chip'+(t===chosenTarget?' on':'');
+  b.textContent=t>0 ? t+' pts' : 'Libre';
+  b.onclick=()=>{
+    $('#wr-targets').querySelectorAll('.t-chip').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
-    chosenTarget=b.dataset.t==='inf'?Infinity:parseInt(b.dataset.t);
-  });
+    chosenTarget=t;
+  };
+  $('#wr-targets').appendChild(b);
 });
+$('#target-label').textContent=targetLabel(chosenTarget);
 (function(){
   const c=(new URLSearchParams(location.search).get('code')||'').toUpperCase();
   if(c) $('#code-input').value=c;
@@ -1301,6 +1281,18 @@ function addChat(d){
   $('#lt-ov').classList.add('show');
 };
  $('#btn-close-lt').onclick=()=>$('#lt-ov').classList.remove('show');
+/* Panneau des règles adapté aux réglages (config.jsonc) */
+(function(){
+  const r=CFG.regles, der=(r.dixDeDer!=null ? r.dixDeDer : 10);
+  $('#rg-total').textContent=$('#rg-total2').textContent=Regles.CARD_POINTS+der;
+  $('#rg-der').textContent=der;
+  if(r.pointsBelote!=null) $('#rg-bel').textContent=r.pointsBelote;
+  if(r.pointsCapot!=null) $('#rg-capot').textContent=r.pointsCapot;
+  $('#rg-sous').textContent = RULES.sousCouper
+    ? ', sinon jouer tout de même un atout plus faible' : ', sinon on peut se défausser d’une autre couleur';
+  $('#rg-bel-acq').textContent = r.beloteToujoursAcquise===false
+    ? 'Si le preneur chute, sa belote revient à la défense.' : 'La belote reste acquise, même si le preneur chute.';
+})();
  $('#btn-rules').onclick=()=>$('#rules-ov').classList.add('show');
  $('#btn-close-rules').onclick=()=>$('#rules-ov').classList.remove('show');
  $('#rules-ov').addEventListener('click',e=>{ if(e.target.id==='rules-ov') $('#rules-ov').classList.remove('show'); });
@@ -1318,8 +1310,9 @@ function addChat(d){
 };
  $('#btn-leave').onclick=()=>{
   if(confirm('Quitter la table ?')){
+    socket.emit('leave');
     sessionStorage.removeItem('belote.pid'); sessionStorage.removeItem('belote.code');
-    location.href=location.pathname;
+    setTimeout(()=>{ location.href=location.pathname; }, 150);
   }
 };
 </script>
