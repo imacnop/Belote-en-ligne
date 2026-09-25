@@ -628,7 +628,7 @@ function avatarSVG(name, size=54){
   const SKIN=['#F1C9A5','#E5B48E','#C98F63','#9A6B45'];
   const HAIR=['#2E2620','#5B3F24','#151515','#7A5A34','#9C4F2A','#4A4A4A'];
   const bg=BG[a%BG.length], shirt=SHIRT[(a>>3)%SHIRT.length],
-        skin=SKIN[(a>>6)%SKIN.length], hair=HAIR[(a>>9)%SKIN.length];
+        skin=SKIN[(a>>6)%SKIN.length], hair=HAIR[(a>>9)%HAIR.length];
   const hat=(a>>12)%4, face=(a>>14)%4;
   let f='';
   if(face===1){
@@ -691,6 +691,7 @@ const Snd={ ctx:null, on:true,
       else if(type==='belote'){ this.tone(392,.16,.06); this.tone(523,.22,.06,.13); } }catch(e){} } };
 document.addEventListener('pointerdown',()=>Snd.ensure(),{once:true});
 
+/* Voix configurée avec un ton plus sensuel, feutré, posé et suave */
 const Voice={ ok:('speechSynthesis' in window), voix:null, siegeVoix:[null,null,null,null],
   FEM:['hortense','julie','amelie','amélie','audrey','denise','virginie',
         'charlotte','léa','lea','celine','céline','marie','google français'],
@@ -713,14 +714,14 @@ const Voice={ ok:('speechSynthesis' in window), voix:null, siegeVoix:[null,null,
       const u=new SpeechSynthesisUtterance(txt);
       u.lang='fr-FR';
       if(voice) u.voice=voice;
-      u.rate=.95; u.pitch=pitch||1.15; u.volume=1;
+      u.rate=.85; u.pitch=pitch||0.88; u.volume=1; /* Voix ralentie et plus grave/chaleureuse */
       speechSynthesis.speak(u);
     }catch(e){}
   },
-  dire(txt){ this.base(txt, this.voix, 1.15); },
+  dire(txt){ this.base(txt, this.voix, 0.85); },
   parler(seat, txt){
     const d=(C.seat>=0)?disp(seat):0;
-    this.base(txt, this.siegeVoix[d], 1+d*0.08);
+    this.base(txt, this.siegeVoix[d], 0.85+d*0.04);
   }
 };
 Voice.init();
