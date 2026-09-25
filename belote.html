@@ -74,15 +74,48 @@
   .card .court .orn{ width:48%; display:block; }
   .card .court .cl{ font-family:'Fraunces',serif; font-weight:900; font-style:italic; font-size:2em; line-height:1; }
   .card .court .cs{ font-size:.9em; line-height:1; }
-  .card.back{ background:#F6F1E3; box-shadow:0 3px 8px rgba(0,0,0,.5); }
+
+  /* ===== Dos des cartes avec logo tricolore BG-FR ===== */
+  .card.back{ background:#F6F1E3; box-shadow:0 3px 8px rgba(0,0,0,.5); overflow:hidden; }
   .card.back::before{
     content:''; position:absolute; inset:6%; border-radius:calc(var(--cw)*.04);
     background:
       repeating-linear-gradient(45deg, rgba(255,245,230,.35) 0 2px, transparent 2px 7px),
       repeating-linear-gradient(-45deg, rgba(255,245,230,.35) 0 2px, transparent 2px 7px),
-      #93312B;
-    border:1px solid #6E211C;
+      #2B4C93;
+    border:1px solid #1A3166;
   }
+  .card.back .logo-bgfr {
+    position: absolute;
+    inset: 18% 18%;
+    background: linear-gradient(90deg, #1A3365 33.33%, #F5F5F5 33.33%, #F5F5F5 66.66%, #B23A32 66.66%);
+    border: 1.5px solid var(--brass);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.4);
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: calc(var(--cw) * .18);
+    letter-spacing: -0.02em;
+    text-align: center;
+    line-height: 1;
+    z-index: 1;
+  }
+  .card.back .logo-bgfr span {
+    font-size: calc(var(--cw) * .10);
+    letter-spacing: 0.1em;
+    color: var(--brass-hi);
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    margin-top: 2px;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.8);
+  }
+
   @keyframes flipIn{ from{ transform:rotateY(88deg) rotate(var(--rot,0deg)); } to{ transform:rotateY(0deg) rotate(var(--rot,0deg)); } }
   .flip-in{ animation:flipIn .26s ease-out both; backface-visibility:hidden; }
 
@@ -431,7 +464,7 @@
     </nav>
 
     <div id="center">
-      <div id="deck"><div class="card back"></div><div class="card back"></div><div class="card back"></div></div>
+      <div id="deck"><div class="card back"><div class="logo-bgfr">BG<span>FR</span></div></div><div class="card back"><div class="logo-bgfr">BG<span>FR</span></div></div><div class="card back"><div class="logo-bgfr">BG<span>FR</span></div></div></div>
       <div id="turned"></div>
       <div class="slot pos-s" id="slot-0"></div>
       <div class="slot pos-e" id="slot-1"></div>
@@ -595,7 +628,7 @@ function avatarSVG(name, size=54){
   const SKIN=['#F1C9A5','#E5B48E','#C98F63','#9A6B45'];
   const HAIR=['#2E2620','#5B3F24','#151515','#7A5A34','#9C4F2A','#4A4A4A'];
   const bg=BG[a%BG.length], shirt=SHIRT[(a>>3)%SHIRT.length],
-        skin=SKIN[(a>>6)%SKIN.length], hair=HAIR[(a>>9)%HAIR.length];
+        skin=SKIN[(a>>6)%SKIN.length], hair=HAIR[(a>>9)%SKIN.length];
   const hat=(a>>12)%4, face=(a>>14)%4;
   let f='';
   if(face===1){
@@ -694,7 +727,11 @@ Voice.init();
 
 function cardEl(card,face=true){
   const el=document.createElement('div');
-  if(!face){ el.className='card back'; return el; }
+  if(!face){ 
+    el.className='card back'; 
+    el.innerHTML='<div class="logo-bgfr">BG<span>FR</span></div>';
+    return el; 
+  }
   el.className='card'+(IS_RED[card.suit]?' red':'');
   const g=GLYPH[card.suit];
   let center='';
@@ -1273,7 +1310,7 @@ $('#btn-close-lt').onclick=()=>$('#lt-ov').classList.remove('show');
     ? 'Si le preneur chute, sa belote revient à la défense.' : 'La belote reste acquise, même si le preneur chute.';
 })();
 $('#btn-rules').onclick=()=>$('#rules-ov').classList.add('show');
-$('#btn-close-rules').onclick=()=>$('#rules-ov').classList.remove('string');
+$('#btn-close-rules').onclick=()=>$('#rules-ov').classList.remove('show');
 $('#rules-ov').addEventListener('click',e=>{ if(e.target.id==='rules-ov') $('#rules-ov').classList.remove('show'); });
 $('#btn-fast').onclick=()=>{
   FAST=!FAST;
