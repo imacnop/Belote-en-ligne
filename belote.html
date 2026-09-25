@@ -48,6 +48,46 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
+  /* ===== Logo central sur le tapis ===== */
+  #felt-center-emblem {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 140px;
+    pointer-events: none;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(201, 164, 100, 0.35);
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(14,53,32,0.65) 0%, rgba(23,77,44,0) 70%);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+  }
+  #felt-center-emblem .emblem-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: 0.05em;
+    background: linear-gradient(90deg, #1A3365 33%, #F5F5F5 50%, #B23A32 70%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  #felt-center-emblem .emblem-sub {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    color: var(--brass-hi);
+    margin-top: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+
   /* ===== Cartes (agrandies) ===== */
   .card{
     --cw:95px; position:relative; width:var(--cw); height:calc(var(--cw)*1.4);
@@ -75,45 +115,19 @@
   .card .court .cl{ font-family:'Fraunces',serif; font-weight:900; font-style:italic; font-size:2em; line-height:1; }
   .card .court .cs{ font-size:.9em; line-height:1; }
 
-  /* ===== Dos des cartes avec logo tricolore BG-FR ===== */
+  /* ===== Dos des cartes : Moitié Noir-Jaune-Rouge / Moitié Bleu-Blanc-Rouge ===== */
   .card.back{ background:#F6F1E3; box-shadow:0 3px 8px rgba(0,0,0,.5); overflow:hidden; }
   .card.back::before{
     content:''; position:absolute; inset:6%; border-radius:calc(var(--cw)*.04);
-    background:
-      repeating-linear-gradient(45deg, rgba(255,245,230,.35) 0 2px, transparent 2px 7px),
-      repeating-linear-gradient(-45deg, rgba(255,245,230,.35) 0 2px, transparent 2px 7px),
-      #2B4C93;
-    border:1px solid #1A3166;
-  }
-  .card.back .logo-bgfr {
-    position: absolute;
-    inset: 18% 18%;
-    background: linear-gradient(90deg, #1A3365 33.33%, #F5F5F5 33.33%, #F5F5F5 66.66%, #B23A32 66.66%);
-    border: 1.5px solid var(--brass);
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.4);
-    color: #FFFFFF;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    font-family: 'Fraunces', serif;
-    font-weight: 900;
-    font-size: calc(var(--cw) * .18);
-    letter-spacing: -0.02em;
-    text-align: center;
-    line-height: 1;
-    z-index: 1;
-  }
-  .card.back .logo-bgfr span {
-    font-size: calc(var(--cw) * .10);
-    letter-spacing: 0.1em;
-    color: var(--brass-hi);
-    font-family: 'Archivo', sans-serif;
-    font-weight: 700;
-    margin-top: 2px;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.8);
+    background: linear-gradient(135deg, 
+      #111111 0%, #111111 16.5%, 
+      #FDDA24 16.5%, #FDDA24 33%, 
+      #EF3340 33%, #EF3340 50%, 
+      #1A3365 50%, #1A3365 66.5%, 
+      #F5F5F5 66.5%, #F5F5F5 83.5%, 
+      #B23A32 83.5%, #B23A32 100%
+    );
+    border:1px solid #1A1A1A;
   }
 
   @keyframes flipIn{ from{ transform:rotateY(88deg) rotate(var(--rot,0deg)); } to{ transform:rotateY(0deg) rotate(var(--rot,0deg)); } }
@@ -441,6 +455,12 @@
 <div id="frame">
   <div id="board">
 
+    <!-- Emblème central ornemental sur le tapis -->
+    <div id="felt-center-emblem">
+      <div class="emblem-title">BG-FR</div>
+      <div class="emblem-sub">La Belote</div>
+    </div>
+
     <div id="scorebox" class="plaque">
       <div class="team t0"><span class="tlabel">Nous</span><span class="tval" id="score-0">0</span></div>
       <div class="target">cible <span id="target-label">501</span></div>
@@ -464,7 +484,7 @@
     </nav>
 
     <div id="center">
-      <div id="deck"><div class="card back"><div class="logo-bgfr">BG<span>FR</span></div></div><div class="card back"><div class="logo-bgfr">BG<span>FR</span></div></div><div class="card back"><div class="logo-bgfr">BG<span>FR</span></div></div></div>
+      <div id="deck"><div class="card back"></div><div class="card back"></div><div class="card back"></div></div>
       <div id="turned"></div>
       <div class="slot pos-s" id="slot-0"></div>
       <div class="slot pos-e" id="slot-1"></div>
@@ -691,7 +711,6 @@ const Snd={ ctx:null, on:true,
       else if(type==='belote'){ this.tone(392,.16,.06); this.tone(523,.22,.06,.13); } }catch(e){} } };
 document.addEventListener('pointerdown',()=>Snd.ensure(),{once:true});
 
-/* Voix configurée avec un ton plus sensuel, feutré, posé et suave */
 const Voice={ ok:('speechSynthesis' in window), voix:null, siegeVoix:[null,null,null,null],
   FEM:['hortense','julie','amelie','amélie','audrey','denise','virginie',
         'charlotte','léa','lea','celine','céline','marie','google français'],
@@ -714,7 +733,7 @@ const Voice={ ok:('speechSynthesis' in window), voix:null, siegeVoix:[null,null,
       const u=new SpeechSynthesisUtterance(txt);
       u.lang='fr-FR';
       if(voice) u.voice=voice;
-      u.rate=.85; u.pitch=pitch||0.88; u.volume=1; /* Voix ralentie et plus grave/chaleureuse */
+      u.rate=.85; u.pitch=pitch||0.88; u.volume=1;
       speechSynthesis.speak(u);
     }catch(e){}
   },
@@ -730,7 +749,6 @@ function cardEl(card,face=true){
   const el=document.createElement('div');
   if(!face){ 
     el.className='card back'; 
-    el.innerHTML='<div class="logo-bgfr">BG<span>FR</span></div>';
     return el; 
   }
   el.className='card'+(IS_RED[card.suit]?' red':'');
