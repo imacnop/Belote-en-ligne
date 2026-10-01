@@ -141,14 +141,26 @@
     color:var(--brass-hi);
   }
   #scorebox{ position:absolute; top:14px; left:14px; z-index:6;
-    display:flex; align-items:center; gap:14px; padding:8px 16px; }
-  #scorebox .team{ display:flex; flex-direction:column; align-items:center; min-width:46px; }
-  #scorebox .tlabel{ font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--brass); }
-  #scorebox .tval{ font-family:'Fraunces',serif; font-weight:800; font-size:21px; line-height:1.1; }
+    display:flex; align-items:center; gap:16px; padding:10px 18px; }
+  #scorebox .team{ display:flex; flex-direction:column; align-items:center; min-width:84px;
+    padding:5px 14px; border-radius:10px; }
+  #scorebox .team.t0{ background:rgba(63,168,102,.25); border:1.5px solid #5FD08A; }
+  #scorebox .team.t0 .tlabel{ color:#9BEDB8; font-weight:700; }
+  #scorebox .team.t1{ background:rgba(178,58,50,.30); border:1.5px solid #E0837A; }
+  #scorebox .team.t1 .tlabel{ color:#F6B1AA; font-weight:700; }
+  #scorebox .tlabel{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--brass); }
+  #scorebox .tval{ font-family:'Fraunces',serif; font-weight:800; font-size:28px; line-height:1.1; }
   #scorebox .tval.bump{ animation:bump .5s ease; }
   @keyframes bump{ 40%{ transform:scale(1.3); color:var(--brass); } }
-  #scorebox .target{ font-size:10.5px; letter-spacing:.06em; color:rgba(243,236,218,.55);
-    border-left:1px solid rgba(201,164,100,.35); border-right:1px solid rgba(201,164,100,.35); padding:0 11px; }
+  #scorebox .target{ display:flex; flex-direction:column; align-items:center; gap:0; min-width:92px;
+    border-left:1px solid rgba(201,164,100,.35); border-right:1px solid rgba(201,164,100,.35); padding:0 16px; }
+  .alabel{ font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--brass); }
+  .asuit{ font-family:'Fraunces',serif; font-weight:900; font-size:54px; line-height:1;
+    color:var(--cream); text-shadow:0 2px 6px rgba(0,0,0,.5); transition:.25s; }
+  .asuit.red{ color:#FF6B5E; }
+  .asuit.empty{ font-size:30px; opacity:.35; }
+  .asuit.proposed{ opacity:.55; }
+  .tgt{ font-size:10.5px; letter-spacing:.06em; color:rgba(243,236,218,.55); }
 
   #chip{ position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:5;
     max-width:42%; font-size:12.5px; letter-spacing:.02em; color:var(--cream-dim);
@@ -272,7 +284,7 @@
   .pile{ position:absolute; z-index:2; display:flex; align-items:center; gap:10px; opacity:.4; transition:opacity .3s; }
   .pile.live{ opacity:1; }
   #pile-0{ right:66px; bottom:16px; }
-  #pile-1{ left:16px; top:96px; flex-direction:row-reverse; }
+  #pile-1{ left:16px; top:130px; flex-direction:row-reverse; }
   .pile .stack{ position:relative; width:42px; height:58px; }
   .pile .stack .card{ --cw:42px; position:absolute; left:0; top:0; }
   .pile .plabel{ font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream-dim);
@@ -440,8 +452,13 @@
     .avwrap{ width:44px; height:44px; }
     .seat-2{ top:54px; }
     .seat-1 .plate, .seat-3 .plate{ margin-bottom:56px; }
-    #pile-0{ right:60px; bottom:14px; } #pile-1{ left:14px; top:84px; }
-    #scorebox{ padding:6px 12px; gap:10px; }
+    #pile-0{ right:60px; bottom:14px; } #pile-1{ left:14px; top:118px; }
+    #scorebox{ padding:6px 10px; gap:8px; }
+    #scorebox .team{ min-width:64px; padding:4px 8px; }
+    #scorebox .tval{ font-size:22px; }
+    #scorebox .tlabel{ font-size:9px; }
+    #scorebox .target{ min-width:64px; padding:0 8px; }
+    .asuit{ font-size:40px; }
     #chat{ width:240px; height:280px; right:10px; bottom:60px; }
     .seat-3{ left:10px; } .seat-1{ right:10px; }
     #deck{ transform:translate(calc(-50% - 115px),-50%); }
@@ -462,9 +479,13 @@
     </div>
 
     <div id="scorebox" class="plaque">
-      <div class="team t0"><span class="tlabel">Nous</span><span class="tval" id="score-0">0</span></div>
-      <div class="target">cible <span id="target-label">501</span></div>
-      <div class="team t1"><span class="tval" id="score-1">0</span><span class="tlabel">Eux</span></div>
+      <div class="team t0"><span class="tlabel">Team Vert</span><span class="tval" id="score-0">0</span></div>
+      <div class="target">
+        <span class="alabel">Atout</span>
+        <span class="asuit empty" id="atout-suit">—</span>
+        <span class="tgt">cible <span id="target-label">501</span></span>
+      </div>
+      <div class="team t1"><span class="tval" id="score-1">0</span><span class="tlabel">Team Rouge</span></div>
     </div>
 
     <div id="chip" class="plaque">Bienvenue à la table</div>
@@ -863,6 +884,12 @@ function toast(html,ms=2600){
 function announce(text){ const b=$('#banner'); b.textContent=text;
   b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
 function updateChip(html){ $('#chip').innerHTML=html; }
+function setAtout(suit, proposed=false){
+  const el=$('#atout-suit');
+  if(!suit){ el.textContent='—'; el.className='asuit empty'; return; }
+  el.textContent=GLYPH[suit];
+  el.className='asuit'+(IS_RED[suit]?' red':'')+(proposed?' proposed':'');
+}
 function updateScore(){
   for(let t=0;t<2;t++){
     const el=$('#score-'+t);
@@ -986,6 +1013,7 @@ socket.on('dealStep', onDealStep);
 socket.on('restStep', onDealStep);
 socket.on('turned', d=>{
   C.turnedCard=d.card;
+  setAtout(d.card.suit, true);
   const el=cardEl(d.card,true); el.classList.add('flip-in');
   $('#turned').innerHTML=''; $('#turned').appendChild(el);
   Snd.play('card');
@@ -1016,6 +1044,7 @@ socket.on('allPass1', ()=>toast('Tout le monde passe : au second tour, chacun pe
 socket.on('allPass', ()=>toast('Personne ne prend : on redistribue'));
 socket.on('taken', d=>{
   C.trump=d.suit; C.taker=d.seat;
+  setAtout(d.suit);
   plateEls[disp(d.seat)].classList.add('took');
   toast(`${esc(nameOf(d.seat))} prend à ${GLYPH[d.suit]} (${SUIT_NAME[d.suit]})`);
   updateChip(`Atout <span class="gr">${GLYPH[d.suit]}</span> — pris par ${esc(nameOf(d.seat))}`);
@@ -1099,6 +1128,7 @@ function onDealStep(d){
 function resetBoard(d){
   C.trump=null; C.taker=-1; C.trick=[]; C.lastTrick=null; C.lastWinner=-1;
   C.counts=[0,0,0,0]; C.myTurn=false; C.turnedCard=null; C.hand=[];
+  setAtout(null);
   clearTimeout(autoPlayTm); clearTimeout(autoPassTm);
   slotEls.forEach(s=>s.innerHTML='');
   for(let i=0;i<4;i++) $('#hand-'+i).innerHTML='';
@@ -1183,6 +1213,7 @@ function showGo(r){
 function applySync(d){
   resetBoard(null);
   C.trump=d.trump; C.taker=d.taker;
+  setAtout(d.trump);
   if(d.trump&&d.taker>=0){
     plateEls[disp(d.taker)].classList.add('took');
     updateChip(`Atout <span class="gr">${GLYPH[d.trump]}</span> — pris par ${esc(nameOf(d.taker))}`);
