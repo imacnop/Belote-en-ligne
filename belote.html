@@ -99,15 +99,16 @@
   .card.red{ color:var(--red); }
   .card .cnr{ position:absolute; display:flex; flex-direction:column; align-items:center; gap:.03em;
     line-height:.92; font-family:'Fraunces',serif; font-weight:700; }
-  .card .cnr .r{ font-size:.92em; letter-spacing:-.02em; }
-  .card .cnr .s{ font-size:.72em; }
-  .card .cnr.tl{ top:6%; left:8%; }
-  .card .cnr.br{ bottom:6%; right:8%; transform:rotate(180deg); }
-  .card .pip{ position:absolute; transform:translate(-50%,-50%); font-size:.92em; line-height:1; }
+  .card .cnr .r{ font-size:.74em; letter-spacing:-.09em; }
+  .card .cnr .s{ font-size:.6em; }
+  .card .cnr.tl{ top:5%; left:6%; }
+  .card .cnr.br{ bottom:5%; right:6%; transform:rotate(180deg); }
+  /* Les points restent dans la zone centrale pour ne pas chevaucher les index en coin */
+  .card .pip{ position:absolute; transform:translate(-50%,-50%); font-size:.72em; line-height:1; }
   .card .pip.fl{ transform:translate(-50%,-50%) rotate(180deg); }
   .card .pip.ace{ left:50%; top:50%; font-size:3.2em; }
   .card .court{
-    position:absolute; inset:15% 17%; border:1.5px solid currentColor; border-radius:6px;
+    position:absolute; inset:12% 25%; border:1.5px solid currentColor; border-radius:6px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
     background:rgba(255,255,255,.4);
   }
@@ -786,10 +787,10 @@ function cardEl(card,face=true){
     center=`<div class="pip ace">${g}</div>`;
   }else{
     const L={
-      '7':[[50,16],[25,33],[75,33],[50,50],[25,67],[75,67],[50,84]],
-      '8':[[25,16],[75,16],[25,39],[75,39],[25,61],[75,61],[25,84],[75,84]],
-      '9':[[25,16],[75,16],[25,39],[75,39],[50,50],[25,61],[75,61],[25,84],[75,84]],
-      '10':[[25,16],[75,16],[50,27],[25,39],[75,39],[25,61],[75,61],[50,73],[25,84],[75,84]]
+      '7':[[50,18],[39,34],[61,34],[50,50],[39,66],[61,66],[50,82]],
+      '8':[[39,18],[61,18],[39,39],[61,39],[39,61],[61,61],[39,82],[61,82]],
+      '9':[[39,18],[61,18],[39,39],[61,39],[50,50],[39,61],[61,61],[39,82],[61,82]],
+      '10':[[39,18],[61,18],[50,28.5],[39,39],[61,39],[39,61],[61,61],[50,71.5],[39,82],[61,82]]
     }[card.rank];
     center=L.map(([x,y])=>`<div class="pip${y>55?' fl':''}" style="left:${x}%;top:${y}%">${g}</div>`).join('');
   }
