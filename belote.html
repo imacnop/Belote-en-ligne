@@ -181,6 +181,19 @@
   #tools svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
   #btn-fast{ opacity:.55; }
 
+  /* ===== Dernier pli, toujours visible ===== */
+  #last-mini{ position:absolute; top:64px; right:14px; z-index:6; padding:7px 10px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; transition:opacity .3s; }
+  #last-mini[hidden]{ display:none; }
+  #last-mini .lm-title{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--brass); }
+  #last-mini .lm-board{ position:relative; width:150px; height:112px; }
+  #last-mini .card{ --cw:42px; position:absolute; transform:translate(-50%,-50%); }
+  @media (max-width:900px){ #last-mini{ transform:scale(.78); transform-origin:top right; top:56px; right:10px; } }
+  #last-mini .card.win{ box-shadow:0 0 0 2px #FFD98A, 0 2px 6px rgba(0,0,0,.5); z-index:1; }
+  #last-mini .lm-win{ font-size:11px; color:var(--cream-dim); max-width:110px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #last-mini .lm-win b{ color:var(--cream); }
+
   /* ===== Centre : talon, carte retournée, pli ===== */
   #center{ position:absolute; left:50%; top:45%; z-index:4; }
   #center > *{ position:absolute; }
@@ -504,6 +517,12 @@
         <svg viewBox="0 0 24 24"><path d="M14 4h5v16h-5M9 8l-4 4 4 4M5 12h10"/></svg>
       </button>
     </nav>
+
+    <div id="last-mini" class="plaque" title="Agrandir le dernier pli" hidden>
+      <span class="lm-title">Dernier pli</span>
+      <div class="lm-board"></div>
+      <span class="lm-win"></span>
+    </div>
 
     <div id="center">
       <div id="deck"><div class="card back"></div><div class="card back"></div><div class="card back"></div></div>
@@ -1105,6 +1124,7 @@ socket.on('trickWon', async d=>{
   await sleep(470);
   gone.forEach(c=>c.remove());
   updatePiles(d.tricks,d.pts);
+  renderLastMini();
 });
 socket.on('handEnd', d=>{
   const r=d.result, m=C.seat%2;
@@ -1136,6 +1156,7 @@ function resetBoard(d){
   $('#turned').innerHTML='';
   $('#deck').classList.remove('hidden');
   $('#btn-last').disabled=true;
+  renderLastMini();
   plateEls.forEach(el=>el.classList.remove('took','active','off'));
   $('#bid-panel').classList.remove('show');
   updatePiles([0,0],[0,0]);
@@ -1236,6 +1257,7 @@ function applySync(d){
     C.lastTrick=d.lastTrick.map(x=>({p:disp(x.p),card:x.card}));
     C.lastWinner=disp(d.lastWinner);
     $('#btn-last').disabled=false;
+    renderLastMini();
   }
   if(d.result) setTimeout(()=>showTicket(d.result, C.seat%2), 400);
 }
@@ -1348,6 +1370,23 @@ $('#btn-last').onclick=()=>{
   $('#lt-ov').classList.add('show');
 };
 $('#btn-close-lt').onclick=()=>$('#lt-ov').classList.remove('show');
+
+// Petit rappel permanent du dernier pli, en croix comme sur la table
+function renderLastMini(){
+  const box=$('#last-mini');
+  if(!C.lastTrick){ box.hidden=true; return; }
+  const b=box.querySelector('.lm-board'); b.innerHTML='';
+  const xy=[[75,81],[126,56],[75,31],[24,56]];
+  C.lastTrick.forEach(x=>{
+    const el=cardEl(x.card,true);
+    el.style.left=xy[x.p][0]+'px'; el.style.top=xy[x.p][1]+'px';
+    if(x.p===C.lastWinner) el.classList.add('win');
+    b.appendChild(el);
+  });
+  box.querySelector('.lm-win').innerHTML=`à <b>${esc(nameOfDisp(C.lastWinner))}</b>`;
+  box.hidden=false;
+}
+$('#last-mini').onclick=()=>$('#btn-last').click();
 
 (function(){
   const r=CFG.regles, der=(r.dixDeDer!=null ? r.dixDeDer : 10);
